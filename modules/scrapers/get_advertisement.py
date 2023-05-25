@@ -1,10 +1,13 @@
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor
+
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from concurrent.futures import ThreadPoolExecutor
-import os
-from utils.logger import file_logger, console_logger
+
+from utils.logger import console_logger
+from utils.logger import file_logger
 
 
 class AdvertisementFetcher:
@@ -26,7 +29,8 @@ class AdvertisementFetcher:
         return [x.strip() for x in features]
 
     def _make_line(self, main_features):
-        temp = {feat: main_features.get(feat, None) for feat in self.all_features}
+        temp = {feat: main_features.get(feat, None)
+                for feat in self.all_features}
         return temp
 
     def _download_url(self, path):
@@ -34,24 +38,37 @@ class AdvertisementFetcher:
             file_logger.info(f'Fetching {path}')
             res = requests.get(path)
             res.raise_for_status()
-            soup = BeautifulSoup(res.text, features="lxml")
+            soup = BeautifulSoup(res.text, features='lxml')
 
             main_params = soup.find_all(class_='offer-params__item')
-            features = {param.find('span', class_='offer-params__label').text.strip(): param.find('div', class_='offer-params__value').text.strip() for param in main_params}
-            extendend_params = soup.find_all("li", class_='parameter-feature-item')
+            features = {
+                param.find('span', class_='offer-params__label').text.strip():
+                    param.find(
+                        'div', class_='offer-params__value').text.strip()
+                for param in main_params
+            }
+            extendend_params = soup.find_all(
+                'li', class_='parameter-feature-item')
             for param in extendend_params:
                 features[param.text.strip()] = 1
 
-            price = "".join(soup.find('span', class_='offer-price__number').text.strip().split()[:-1])
+            price = ''.join(
+                soup.find('span',
+                          class_='offer-price__number').text.
+                strip().split()[:-1]
+            )
             features['Cena'] = price
-            currency = soup.find('span', class_='offer-price__currency').text.strip()
+            currency = soup.find(
+                'span', class_='offer-price__currency').text.strip()
             features['Waluta'] = currency
-            price_details = soup.find('span', class_='offer-price__details').text.strip()
+            price_details = soup.find(
+                'span', class_='offer-price__details').text.strip()
             features['Szczegóły ceny'] = price_details
 
             features = self._make_line(features)
 
-        except:
+        except Exception as e:
+            file_logger.error(f'Error {e} while fetching {path}')
             return None
 
         time.sleep(0.25)
@@ -63,8 +80,14 @@ class AdvertisementFetcher:
             Args:
                  links: links
         """
-        with ThreadPoolExecutor(max_workers=min(self.MAX_THREADS, len(links))) as executor:
-            features = [executor.submit(self._download_url, link) for link in links]
+        with ThreadPoolExecutor(
+                max_workers=min(
+                    self.MAX_THREADS,
+                    len(links)
+                )
+        ) as executor:
+            features = [executor.submit(self._download_url, link)
+                        for link in links]
             for feature in features:
                 result = feature.result()
                 if result is not None:
@@ -83,8 +106,3 @@ class AdvertisementFetcher:
 
     def setup_fetcher(self):
         self._cars = []
-
-
-if __name__ == "__main__":
-    ad_fetcher = AdvertisementFetcher()
-    ad_fetcher.save_ads('otomoto', ['https://www.otomoto.pl/oferta/tesla-model-x-tesla-x-plaid-model-2023-nowy-ID6EVI7D.html'])
