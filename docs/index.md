@@ -1,6 +1,6 @@
 # Otomoto Scraper
 
-This program gets more than 95% advertisements from [otomoto.pl](https://otomoto.pl) with 227 features - [show features](/resources/input/feats.txt)
+This program gets more than 95% advertisements from [otomoto.pl](https://otomoto.pl) with 227 features - [show features](https://github.com/jedrzejd/Otomoto-Scraper/blob/main/resources/input/feats.txt)
 
 ---
 ## Table Of Contents
@@ -16,7 +16,7 @@ Program saves datasets to ```data/``` directory.
 
 Each the car brand has a separate file ```car_name.xlsx``` with data and have ```car.xlsx``` with all cars.
 
-Results should be 12 hours later.
+Results should be 10 hours later.
 
 Instalation instructions are in [installation.md](installation.md)
 
