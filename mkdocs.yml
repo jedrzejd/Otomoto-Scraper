@@ -1,0 +1,8 @@
+site_name: Otomoto Scraper
+theme: material
+plugins:
+  - mkdocstrings
+nav:
+  - index.md
+  - installation.md
+  - code_docs.md
