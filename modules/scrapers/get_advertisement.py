@@ -96,7 +96,8 @@ class AdvertisementFetcher:
     def save_ads(self, model):
         """
             Saves ads
-            :param model: model
+            Args:
+                 model: model
         """
         file_logger.info(f'Saving {model} ads')
         file_logger.info(f'Found {len(self._cars)} ads')
