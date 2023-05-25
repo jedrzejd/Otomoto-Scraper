@@ -17,8 +17,8 @@ class CarScraper:
     def __init__(self, model_file_path, data_directory):
         console_logger.info("Initializing Car scrapper")
         file_logger.info("Initializing Car scrapper")
-        self.model_file_path = model_file_path
-        self.data_directory = data_directory
+        self.model_file_path = os.path.join(os.getcwd(), model_file_path)
+        self.data_directory = os.path.join(os.getcwd(), data_directory)
         self.models = self._read_models()
         self.ad_fetcher = AdvertisementFetcher()
 
