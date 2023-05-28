@@ -16,7 +16,7 @@ This guide will help you install the application on your computer.
 * Download this repository and unzip
 
 ```bash
-git clone https://github.com/jedrzejd/scrap-otomoto.git
+git clone https://github.com/jedrzejd/Otomoto-Scraper.git
 ```
 
 * Create python virtual environment
@@ -47,6 +47,9 @@ pip install -r requirements.txt
     ```
 * Download this repository and unzip
 
+```bash
+git clone https://github.com/jedrzejd/Otomoto-Scraper.git
+```
 
 * Create python virtual environment
 
