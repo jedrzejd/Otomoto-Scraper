@@ -1,6 +1,7 @@
 import os
 import time
 
+import httpx
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -42,13 +43,38 @@ class CarScraper:
         """
         console_logger.info('Scrapping page: %s', i)
         file_logger.info('Scrapping page: %s', i)
-        res = requests.get(f'{path}?page={i}')
+        headers = {
+            'User-Agent':
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                'Chrome/117.0.0.0 Safari/537.36',
+            'Accept':
+                'text/html,application/xhtml+xml,application'
+                '/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
+                'application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language':
+                'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Referer': 'https://www.google.com/',
+        }
+        res = httpx.get(f'{path}?page={i}', headers=headers)
+        # res = requests.get(f'{path}?page={i}')
         res.raise_for_status()
         soup = BeautifulSoup(res.text, features='lxml')
         car_links_section = soup.find(
             'main', attrs={'data-testid': 'search-results'})
-        links = [x.find('a', href=True)['href']
-                 for x in car_links_section.find_all('article')]
+        links = []
+        for x in car_links_section.find_all('div'):
+            try:
+                links.append(
+                    x.find(
+                        'article',
+                        attrs={
+                            'data-media-size': True
+                        }
+                    ).find('a', href=True)['href']
+                )
+            except Exception:
+                pass
         console_logger.info('Found %s links', len(links))
         file_logger.info('Found %s links', len(links))
         return links
@@ -66,6 +92,20 @@ class CarScraper:
         path = f'https://www.otomoto.pl/osobowe/{model}'
         try:
             res = requests.get(path)
+            headers = {
+                'User-Agent':
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/117.0.0.0 Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;'
+                    'q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
+                    'application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language':
+                    'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Referer': 'https://www.google.com/',
+            }
+            res = httpx.get(path, headers=headers)
             res.raise_for_status()
             soup = BeautifulSoup(res.text, features='lxml')
             last_page_num = int(soup.find_all(
