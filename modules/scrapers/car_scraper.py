@@ -57,7 +57,6 @@ class CarScraper:
             'Referer': 'https://www.google.com/',
         }
         res = httpx.get(f'{path}?page={i}', headers=headers)
-        # res = requests.get(f'{path}?page={i}')
         res.raise_for_status()
         soup = BeautifulSoup(res.text, features='lxml')
         car_links_section = soup.find(
@@ -139,7 +138,7 @@ class CarScraper:
         console_logger.info('Combining data...')
         file_logger.info('Combining data...')
         xlsx_filenames = [os.path.join(
-            self.data_directory, f'{model.strip()}.xlsx')
+            self.data_directory, f'{model.strip()}.csv')
             for model in self.models
         ]
         combined_data = []
@@ -150,6 +149,6 @@ class CarScraper:
             except Exception:
                 pass
         df_all = pd.concat(combined_data, ignore_index=True)
-        df_all.to_excel('car.xlsx', index=False)
-        console_logger.info('Combined data saved to car.xlsx')
-        file_logger.info('Combined data saved to car.xlsx')
+        df_all.to_csv('car.csv', index=False)
+        console_logger.info('Combined data saved to car.csv')
+        file_logger.info('Combined data saved to car.csv')

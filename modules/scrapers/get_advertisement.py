@@ -1,4 +1,5 @@
 import os
+import random
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
@@ -39,21 +40,46 @@ class AdvertisementFetcher:
     def _download_url(self, path) -> Dict[str, str]:
         try:
             file_logger.info(f'Fetching {path}')
-            headers = {
-                'User-Agent':
-                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-                    'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/117.0.0.0 Safari/537.36',
-                'Accept':
-                    'text/html,application/xhtml+xml,application'
-                    '/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
-                    'application/signed-exchange;v=b3;q=0.7',
-                'Accept-Language':
-                    'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
-                'Referer':
-                    'https://www.google.com/',
-            }
-            res = httpx.get(path, headers=headers)
+            headers = [
+                {
+                    'User-Agent':
+                        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                        'AppleWebKit/537.36 (KHTML, like Gecko) '
+                        'Chrome/117.0.0.0 Safari/537.36',
+                    'Accept':
+                        'text/html,application/xhtml+xml,application'
+                        '/xml;q=0.9,image/avif,image/webp,image/apng,*/*;'
+                        'q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Language':
+                        'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Referer':
+                        'https://www.google.com/',
+                },
+                {
+                    'User-Agent':
+                        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; '
+                        'rv:109.0) Gecko/20100101 Firefox/109.0',
+                    'Accept-Language': 'pl-PL,pl;q=0.9,en-US,en;q=0.7',
+                    'Accept': 'text/html,application/xhtml+xml,application/'
+                              'xml;q=0.9,image/avif,image/webp,'
+                              'image/apng,*/*;q=0.8',
+                    'Referer':
+                        'https://www.google.com/',
+                },
+                {
+                    'User-Agent':
+                        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15;'
+                        ' rv:109.0) Gecko/20100101 Firefox/117.0',
+                    'Accept-Language': 'pl,en-US;q=0.7,en;q=0.3',
+                    'Accept': 'text/html,application/xhtml+xml,'
+                              'application/xml;q=0.9,image/avif,'
+                              'image/webp,*/*;q=0.8',
+                    'Referer':
+                        'https://www.google.com/',
+                }
+            ]
+            header = random.choice(headers)
+            res = httpx.get(path, headers=header)
             res = requests.get(path)
             res.raise_for_status()
             soup = BeautifulSoup(res.text, features='lxml')
@@ -231,7 +257,8 @@ class AdvertisementFetcher:
         file_logger.info(f'Saving {model} ads')
         file_logger.info(f'Found {len(self._cars)} ads')
         console_logger.info(f'Found {len(self._cars)} ads')
-        pd.DataFrame(self._cars).to_excel(f'output/data/{model}.xlsx')
+        pd.DataFrame(self._cars).to_csv(
+            f'output/data/{model}.csv', index=False)
         file_logger.info(f'Saved {model} ads')
 
     def setup_fetcher(self):
