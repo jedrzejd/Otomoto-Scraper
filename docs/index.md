@@ -37,6 +37,6 @@ py scrap_cars.py
 ```
 
 ## Technologies
-- Python 3.7
+- Python 3.10.1
 - beautifulsoup4
 - requests
