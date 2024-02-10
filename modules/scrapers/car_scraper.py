@@ -1,4 +1,5 @@
 import os
+import random
 import time
 
 import httpx
@@ -43,37 +44,79 @@ class CarScraper:
         """
         console_logger.info('Scrapping page: %s', i)
         file_logger.info('Scrapping page: %s', i)
-        headers = {
-            'User-Agent':
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-                'AppleWebKit/537.36 (KHTML, like Gecko) '
-                'Chrome/117.0.0.0 Safari/537.36',
-            'Accept':
-                'text/html,application/xhtml+xml,application'
-                '/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
-                'application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language':
-                'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Referer': 'https://www.google.com/',
-        }
-        res = httpx.get(f'{path}?page={i}', headers=headers)
+        headers = [
+            {
+                'User-Agent':
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/117.0.0.0 Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application'
+                    '/xml;q=0.9,image/avif,image/webp,image/apng,*/*;'
+                    'q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language':
+                    'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Referer':
+                    'https://www.google.com/',
+            },
+            {
+                'User-Agent':
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; '
+                    'rv:109.0) Gecko/20100101 Firefox/109.0',
+                'Accept-Language': 'pl-PL,pl;q=0.9,en-US,en;q=0.7',
+                'Accept': 'text/html,application/xhtml+xml,application/'
+                          'xml;q=0.9,image/avif,image/webp,'
+                          'image/apng,*/*;q=0.8',
+                'Referer':
+                    'https://www.google.com/',
+            },
+            {
+                'User-Agent':
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15;'
+                    ' rv:109.0) Gecko/20100101 Firefox/117.0',
+                'Accept-Language': 'pl,en-US;q=0.7,en;q=0.3',
+                'Accept': 'text/html,application/xhtml+xml,'
+                          'application/xml;q=0.9,image/avif,'
+                          'image/webp,*/*;q=0.8',
+                'Referer':
+                    'https://www.google.com/',
+            }
+        ]
+        header = random.choice(headers)
+        res = httpx.get(f'{path}?page={i}', headers=header)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, features='lxml')
-        car_links_section = soup.find(
-            'main', attrs={'data-testid': 'search-results'})
         links = []
-        for x in car_links_section.find_all('div'):
+        car_links_section = []
+        try:
+            car_links_section = soup.find(
+                'main', attrs={'data-testid': 'search-results'})
+            car_links_section = car_links_section.find_all('div')
+        except Exception:
             try:
-                links.append(
-                    x.find(
-                        'article',
-                        attrs={
-                            'data-media-size': True
-                        }
-                    ).find('a', href=True)['href']
+                header = random.choice(headers)
+                res = httpx.get(f'{path}?page={i}', headers=header)
+                res.raise_for_status()
+
+                soup = BeautifulSoup(res.text, features='lxml')
+                car_links_section = soup.find(
+                    'div', attrs={'data-testid': 'search-results'})
+                car_links_section = car_links_section.find_all(
+                    'article',
+                    attrs={
+                        'data-media-size': True
+                    }
                 )
             except Exception:
+                car_links_section = []
+        for x in car_links_section:
+            try:
+                section = x.find('section')
+                link = section.find('a', href=True)['href']
+                links.append(link)
+            except Exception:
                 pass
+
         console_logger.info('Found %s links', len(links))
         file_logger.info('Found %s links', len(links))
         return links
@@ -130,25 +173,30 @@ class CarScraper:
         console_logger.info('Starting scrapping cars...')
         file_logger.info('Starting scrapping cars...')
         for model in self.models:
-            self.scrap_model(model)
+            try:
+                self.scrap_model(model)
+            except Exception:
+                console_logger.error('Error while scrapping model: %s', model)
+                file_logger.error('Error while scrapping model: %s', model)
+                pass
         console_logger.info('End scrapping cars')
         file_logger.info('End scrapping cars')
 
     def combine_data(self):
         console_logger.info('Combining data...')
         file_logger.info('Combining data...')
-        xlsx_filenames = [os.path.join(
+        csv_filenames = [os.path.join(
             self.data_directory, f'{model.strip()}.csv')
             for model in self.models
         ]
         combined_data = []
-        for filename in xlsx_filenames:
+        for filename in csv_filenames:
             try:
-                combined_data.append(pd.read_excel(
-                    filename, index_col='Unnamed: 0'))
+                combined_data.append(pd.read_csv(
+                    filename, index_col=False, low_memory=False))
             except Exception:
                 pass
         df_all = pd.concat(combined_data, ignore_index=True)
-        df_all.to_csv('car.csv', index=False)
+        df_all.to_csv('output/data/car.csv', index=False)
         console_logger.info('Combined data saved to car.csv')
         file_logger.info('Combined data saved to car.csv')

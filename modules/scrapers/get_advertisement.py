@@ -7,7 +7,6 @@ from typing import List
 
 import httpx
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
 
 from utils.logger import console_logger
@@ -80,7 +79,6 @@ class AdvertisementFetcher:
             ]
             header = random.choice(headers)
             res = httpx.get(path, headers=header)
-            res = requests.get(path)
             res.raise_for_status()
             soup = BeautifulSoup(res.text, features='lxml')
             for style_tag in soup.find_all('style'):
@@ -114,7 +112,7 @@ class AdvertisementFetcher:
         features = dict()
         try:
             main_params = soup.find(
-                'div', attrs={'data-testid': 'advert-details-list'})
+                'div', attrs={'data-testid': 'content-details-section'})
             for param in main_params.find_all(
                     'div',
                     attrs={'data-testid': 'advert-details-item'}
@@ -233,6 +231,8 @@ class AdvertisementFetcher:
             Args:
                  links: links
         """
+        if len(links) == 0:
+            return
         with ThreadPoolExecutor(
                 max_workers=min(
                     self.MAX_THREADS,
